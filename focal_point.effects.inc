@@ -45,7 +45,7 @@ function focal_point_scale_and_crop_effect(&$image, $data) {
     return image_crop_effect($image, $crop_data);
   }
 
-  // At worst use the default effect and let Drupal handle the errors that
+  // At worst use the default effect and let Backdrop handle the errors that
   // likely exist at this point.
   return image_scale_and_crop_effect($image, $data);
 }
@@ -64,24 +64,24 @@ function focal_point_crop_form($data = array()) {
     '#collapsed' => TRUE,
   );
   $form['focal_point_advanced']['shift_x'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
     '#title' => 'Horizontal Shift',
     '#description' => t('If set images will be cropped as though the focal point indicator has been shifted left (positive values) or shifted right (negative values) by the number of pixels specified.'),
     '#default_value' => (isset($data['focal_point_advanced']['shift_x']) ? $data['focal_point_advanced']['shift_x'] : ''),
     '#field_suffix' => t('pixels'),
     '#size' => 10,
-    '#element_validate' => array('image_effect_integer_validate'),
-    '#allow_negative' => TRUE,
+    '#min' => -100000000,
+    '#max' => 1000000000,
   );
   $form['focal_point_advanced']['shift_y'] = array(
-    '#type' => 'textfield',
+    '#type' => 'number',
     '#title' => 'Veritical Shift',
     '#description' => t('If set images will be cropped as though the focal point indicator has been shifted up (positive values) or shifted down (negative values) by the number of pixels specified.'),
     '#default_value' => (isset($data['focal_point_advanced']['shift_y']) ? $data['focal_point_advanced']['shift_y'] : ''),
     '#field_suffix' => t('pixels'),
     '#size' => 10,
-    '#element_validate' => array('image_effect_integer_validate'),
-    '#allow_negative' => TRUE,
+    '#min' => -100000000,
+    '#max' => 1000000000,
   );
 
   return $form;
@@ -95,7 +95,7 @@ function focal_point_crop_effect(&$image, $data) {
     return image_crop_effect($image, $crop_data);
   }
 
-  // At worst use the default effect and let Drupal handle the errors that
+  // At worst use the default effect and let Backdrop handle the errors that
   // likely exist at this point.
   return image_crop_effect($image, $data);
 }
@@ -122,7 +122,7 @@ function focal_point_effect_crop_data($image, $data) {
     $focal_point = $file->focal_point;
 
     // Special handling for preview images.
-    $parameters = drupal_get_query_parameters();
+    $parameters = backdrop_get_query_parameters();
     // Query parameters overwrite the stored focal point.
     if (!empty($parameters['focal_point'])) {
       $focal_point = focal_point_validate($parameters['focal_point']) ? $parameters['focal_point'] : $focal_point;

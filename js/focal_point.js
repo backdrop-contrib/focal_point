@@ -11,7 +11,7 @@
   /**
    * Focal Point indicator.
    */
-  Drupal.behaviors.focalPointIndicator = {
+  Backdrop.behaviors.focalPointIndicator = {
     attach: function(context, settings) {
       $(".focal-point-indicator", context).once(function() {
         // Set some variables for the different pieces at play.

@@ -9,7 +9,7 @@
  * module is currently enabled.
  */
 
-include_once drupal_get_path('module', 'smartcrop') . '/image.gd.inc';
+include_once backdrop_get_path('module', 'smartcrop') . '/image.gd.inc';
 
 /**
  * Given an image, use smartcrop to estimate a good focal point.

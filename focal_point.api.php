@@ -56,7 +56,7 @@ function hook_focal_point_default_method_info_alter(&$info) {
  *
  * @param array $element
  *   A keyed array with:
- *     - 'fid' : the Drupal file ID
+ *     - 'fid' : the Backdrop file ID
  *     - 'focal_point' : the string representing the focal point position.
  */
 function hook_focal_point_save($element) {
@@ -67,7 +67,7 @@ function hook_focal_point_save($element) {
  * Hook invoked after deleting a Focal_Point record.
  *
  * @param int $fid
- *   The Drupal file ID associated to the deleted Focal point.
+ *   The Backdrop file ID associated to the deleted Focal point.
  */
 function hook_focal_point_delete($fid) {
   // Your code here.

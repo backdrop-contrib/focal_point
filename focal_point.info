@@ -1,8 +1,10 @@
 name = Focal Point
 description = Users can specify the focal point of an image for use during cropping.
-core = 7.x
+backdrop = 1.x
+type = module
 
 dependencies[] = entity
+dependencies[] = entity_plus
 dependencies[] = image
 
 configure = admin/config/media/focal_point

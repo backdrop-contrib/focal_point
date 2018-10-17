@@ -9,17 +9,20 @@
  * System form for focal point configuration settings.
  */
 function focal_point_configuration_form($form, &$form_state) {
+  $config = config('focal_point.settings');
+
   $default_options = array();
   $default_info = focal_point_get_default_method_info();
   foreach ($default_info as $key => $info) {
     $default_options[$key] = check_plain($info['label']);
   }
+  $form['#config'] = 'focal_point.settings';
   $form['focal_point_default_method'] = array(
     '#type' => 'select',
     '#title' => t('Calculate intial focal point using'),
     '#descrition' => t('This can slow down your site, especially if you are bulk uploading images.'),
     '#options' => array('' => t('Disabled')) + $default_options,
-    '#default_value' => variable_get('focal_point_default_method', ''),
+    '#default_value' => $config->get('focal_point_default_method'),
     '#access' => !empty($default_options),
   );
 
@@ -32,7 +35,7 @@ function focal_point_configuration_form($form, &$form_state) {
     '#type' => 'checkboxes',
     '#title' => 'Enable focal point for the following:',
     '#options' => $options,
-    '#default_value' => variable_get('focal_point_enabled_for', array_keys($options)),
+    '#default_value' => $config->get('focal_point_enabled_for'),
   );
   $form['focal_point_test_drive_link'] = array(
     '#type' => 'markup',
@@ -46,9 +49,10 @@ function focal_point_configuration_form($form, &$form_state) {
  * Form builder for the "test drive" page.
  */
 function focal_point_test_drive_form($form, &$form_state) {
-  $fid = variable_get('focal_point_test_drive_image', NULL);
+  $config = config('focal_point.settings');
+  $fid = $config->get('focal_point_test_drive_image');
   $file = !is_null($fid) ? file_load($fid) : NULL;
-  $focal_point = variable_get('focal_point_test_drive_focal_point', FOCAL_POINT_DEFAULT);
+  $focal_point = $config->get('focal_point_test_drive_focal_point');
 
   if (!empty($fid) && $file) {
     // Display the image and include the focal point indicator and field.
@@ -82,14 +86,17 @@ function focal_point_test_drive_form($form, &$form_state) {
  * @see focal_point_test_drive_form()
  */
 function focal_point_test_drive_form_submit(&$form, &$form_state) {
+  $config = config('focal_point.settings');
+
   // Save the test drive focal point setting.
   if (isset($form_state['values']['focal_point_test_drive_focal_point'])) {
-    $old_value = variable_get('focal_point_test_drive_focal_point', FOCAL_POINT_DEFAULT);
+    $old_value = $config->get('focal_point_test_drive_focal_point');
     if ($old_value !== $form_state['values']['focal_point_test_drive_focal_point']) {
-      variable_set('focal_point_test_drive_focal_point', $form_state['values']['focal_point_test_drive_focal_point']);
+      $config->set('focal_point_test_drive_focal_point', $form_state['values']['focal_point_test_drive_focal_point']);
+      $config->save();
 
       // Delete old derivative images since the focal point changed.
-      $fid = variable_get('focal_point_test_drive_image', NULL);
+      $fid = $config->get('focal_point_test_drive_image');
       $file = !is_null($fid) ? file_load($fid) : NULL;
       if ($file) {
         image_path_flush($file->uri);
@@ -125,7 +132,7 @@ function focal_point_preview_page($fid, $focal_point = '') {
     image_path_flush($file->uri);
   }
   else {
-    drupal_set_message(t('Invalid request. The preview images could not be displayed.'), 'error');
+    backdrop_set_message(t('Invalid request. The preview images could not be displayed.'), 'error');
     $output = array();
   }
 

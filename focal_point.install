@@ -14,26 +14,23 @@ function focal_point_install() {
   $count_plural = format_plural($count, '%count image', '%count images', array('%count' => $count));
 
   if (!empty($count)) {
-    drupal_set_message($t('Migrated the imagefield_focus data for @count images. Any changes you make to imagefield_focus data from now on will not be reflected in your focal point data.', array('@count' => $count_plural)));
+    backdrop_set_message($t('Migrated the imagefield_focus data for @count images. Any changes you make to imagefield_focus data from now on will not be reflected in your focal point data.', array('@count' => $count_plural)));
   }
 
-  focal_point_update_7005();
+  focal_point_update_1001();
 }
 
 /**
  * Implements hook_uninstall().
  */
 function focal_point_uninstall() {
-  variable_del('focal_point_enabled_for');
-  variable_del('focal_point_default_method');
 
   // Delete the test drive image.
-  $fid = variable_get('focal_point_test_drive_image', -1);
+  $fid = config_get('focal_point.settings', 'focal_point_test_drive_image');
   if ($file = file_load($fid)) {
     file_usage_delete($file, 'focal_point');
     file_delete($file);
   }
-  variable_del('focal_point_test_drive_image');
 }
 
 /**
@@ -112,13 +109,15 @@ function focal_point_migrate_imagefield_focus_data($overwrite = FALSE) {
  *   The file scheme for saving a test image.
  */
 function focal_point_create_test_image($scheme) {
-  variable_del('focal_point_test_drive_focal_point');
+  $config = config('focal_point.settings');
+  $config->clear('focal_point_test_drive_focal_point');
+  $config->save();
 
   // Create an image to use for the "Test Drive" page.
   $test_drive_image = array(
     'scheme' => $scheme . '://',
     'dest_directory' => 'focal_point',
-    'source_path' => drupal_get_path('module', 'focal_point') . '/images/' . 'test-drive.jpg',
+    'source_path' => backdrop_get_path('module', 'focal_point') . '/images/' . 'test-drive.jpg',
     'file_name' => 'test-drive.jpg',
   );
 
@@ -126,50 +125,61 @@ function focal_point_create_test_image($scheme) {
   $file_uri = $full_dir . '/' . $test_drive_image['file_name'];
   file_prepare_directory($full_dir, FILE_CREATE_DIRECTORY);
   file_unmanaged_copy($test_drive_image['source_path'], $file_uri, FILE_EXISTS_REPLACE);
-  $file = (object) array(
+  $file = array(
     'uid' => 1,
     'status' => FILE_STATUS_PERMANENT,
     'filename' => $test_drive_image['file_name'],
     'uri' => $file_uri,
     'filemime' => file_get_mimetype($test_drive_image['source_path']),
   );
-  $file = file_save($file);
+  $file = entity_create('file', (array) $file);
   if ($file) {
-    variable_set('focal_point_test_drive_image', $file->fid);
+    $config->set('focal_point_test_drive_image', $file->fid);
+    $config->save();
   }
 }
 
 /**
- * Removed focal_point_update_7001. See https://www.drupal.org/node/2453429.
+ * Implements hook_update_last_removed().
  */
-
-/**
- * Removing the 'focal_point_preview_image_style' variable.
- */
-function focal_point_update_7002() {
-  variable_del('focal_point_preview_image_style');
+function focal_point_update_last_removed() {
+  return 7005;
 }
 
 /**
- * Convert the focal_point_use_smart_crop variable to generic default variables.
+ * @defgroup updates-7.x-to-1.x Updates from 7.x to 1.x
+ * @{
+ * Update functions from Drupal 7.x to Backdrop CMS 1.x.
  */
-function focal_point_update_7003() {
-  if (variable_get('focal_point_use_smart_crop')) {
-    variable_set('focal_point_default_method', 'smartcrop');
-  }
-  variable_del('focal_point_use_smart_crop');
-}
 
 /**
- * Removed focal_point_update_7004. See https://www.drupal.org/node/2653332.
+ * Move focal_point settings from variables to config.
  */
+
+function focal_point_update_1000() {
+
+  // Migrate variables to config.
+  $config = config('focal_point.settings');
+  $config->set('focal_point_test_drive_image', update_variable_get('focal_point_test_drive_image', NULL));
+  $config->set('focal_point_test_drive_focal_point', update_variable_get('focal_point_test_drive_focal_point', FOCAL_POINT_DEFAULT));
+  $config->set('focal_point_default_method', update_variable_get('focal_point_default_method', ''));
+  $config->set('focal_point_enabled_for', update_variable_get('focal_point_enabled_for', array('image', 'media')));
+
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('focal_point_test_drive_image');
+  update_variable_del('focal_point_test_drive_focal_point');
+  update_variable_del('focal_point_default_method');
+  update_variable_del('focal_point_enabled_for');
+}
 
 /**
  * Update test drive image to use file default scheme, so remote schemes work.
  */
-function focal_point_update_7005() {
-  $scheme = variable_get('file_default_scheme', 'public');
-  $fid = variable_get('focal_point_test_drive_image', NULL);
+function focal_point_update_1001() {
+  $scheme = config_get('system.core', 'file_default_scheme');
+  $fid = config_get('focal_point.settings', 'focal_point_test_drive_image');
 
   if (is_null($fid)) {
     focal_point_create_test_image($scheme);
@@ -182,3 +192,8 @@ function focal_point_update_7005() {
     }
   }
 }
+
+/*
+ * @} End of "defgroup updates-7.x-to-1.x"
+ * The next series of updates should start at 2000.
+ */
