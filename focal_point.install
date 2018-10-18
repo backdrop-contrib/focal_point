@@ -133,6 +133,7 @@ function focal_point_create_test_image($scheme) {
     'filemime' => file_get_mimetype($test_drive_image['source_path']),
   );
   $file = entity_create('file', (array) $file);
+  file_save($file);
   if ($file) {
     $config->set('focal_point_test_drive_image', $file->fid);
     $config->save();
@@ -163,7 +164,7 @@ function focal_point_update_1000() {
   $config->set('focal_point_test_drive_image', update_variable_get('focal_point_test_drive_image', NULL));
   $config->set('focal_point_test_drive_focal_point', update_variable_get('focal_point_test_drive_focal_point', FOCAL_POINT_DEFAULT));
   $config->set('focal_point_default_method', update_variable_get('focal_point_default_method', ''));
-  $config->set('focal_point_enabled_for', update_variable_get('focal_point_enabled_for', array('image', 'media')));
+  $config->set('focal_point_enabled_for', update_variable_get('focal_point_enabled_for', array('image')));
 
   $config->save();
 

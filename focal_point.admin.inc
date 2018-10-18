@@ -28,7 +28,6 @@ function focal_point_configuration_form($form, &$form_state) {
 
   $options = array(
     'image' => t('Standard image fields'),
-    'media' => t('Media module image fields'),
   );
   // @todo consider allowing $options to be altered.
   $form['focal_point_enabled_for'] = array(

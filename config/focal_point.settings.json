@@ -2,9 +2,8 @@
     "_config_name": "focal_point.settings",
     "focal_point_default_method": "",
     "focal_point_enabled_for": {
-        "image": "image",
-        "media": "media"
+        "image": "image"
     },
-    "focal_point_test_drive_focal_point": "50, 50",
+    "focal_point_test_drive_focal_point": "50,50",
     "focal_point_test_drive_image": null
 }
