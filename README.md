@@ -13,12 +13,6 @@ as described here: <https://drupal.org/node/1889542>.
 There is an update path provided (during installation) that will migrate
 existing imagefield_focus data to focal_points.
 
-Dependencies
-------------
-
-* entity
-* image
-
 Installation
 ------------
 
@@ -100,12 +94,11 @@ Maintainers
 
 Seeking maintainers.
 
+Credits
+-------
 Ported to Backdrop by:
 
 * herbdool <https://github.com/herbdool>
-
-Credits
--------
 
 This module is based on the Focal Point module for Drupal--starting at version 7.x-1.1--originally written and maintained by:
 
