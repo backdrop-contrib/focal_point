@@ -86,6 +86,17 @@ function focal_point_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function focal_point_config_info() {
+  $prefixes['focal_point.settings'] = array(
+    'label' => t('Focal Point settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
  * Implements hook_admin_paths().
  */
 function focal_point_admin_paths() {
