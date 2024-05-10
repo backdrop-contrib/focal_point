@@ -34,7 +34,8 @@ function focal_point_menu() {
   );
   $items['focal_point/preview/%/%'] = array(
     'type' => MENU_CALLBACK,
-    'title' => 'Image Preview',
+    'title callback' => 'focal_point_preview_page_title',
+    'title arguments' => array(3),
     'page callback' => 'focal_point_preview_page',
     'page arguments' => array(2, 3),
     'access arguments' => array('preview focal point'),
@@ -65,6 +66,7 @@ function focal_point_theme($existing, $type, $theme, $path) {
       'variables' => array(
         'focal_point' => NULL,
         'style_name' => NULL,
+        'style_label' => NULL,
         'path' => NULL,
         'width' => NULL,
         'height' => NULL,
@@ -108,30 +110,6 @@ function focal_point_admin_paths() {
 }
 
 /**
- * Implements hook_image_default_styles().
- */
-function focal_point_image_default_styles() {
-  $styles = array();
-
-  $styles['focal_point_preview'] = array(
-    'label' => 'Focal Point Preview',
-    'effects' => array(
-      array(
-        'name' => 'image_scale',
-        'data' => array(
-          'width' => 250,
-          'height' => NULL,
-          'upscale' => 1,
-        ),
-        'weight' => 0,
-      ),
-    ),
-  );
-
-  return $styles;
-}
-
-/**
  * Implements hook_file_load().
  */
 function focal_point_file_load($files) {
@@ -142,8 +120,8 @@ function focal_point_file_load($files) {
   foreach ($files as &$file) {
     $file->focal_point = isset($focal_points[$file->fid]) ? $focal_points[$file->fid] : '';
     // Special handling for the "test drive file".
-    if ($file->fid == $config->get('focal_point_test_drive_image')) {
-      $file->focal_point = $config->get('focal_point_test_drive_focal_point');
+    if ($file->fid == $config->get('test_drive_image')) {
+      $file->focal_point = $config->get('test_drive_focal_point');
     }
   }
 }
@@ -182,7 +160,7 @@ function focal_point_form_file_entity_edit_alter(&$form, &$form_state) {
  *   The file object we should be adding the preview for.
  */
 function _focal_point_form_append_focal_point_preview(&$form, $file) {
-  if (_focal_point_supported_field_type('media') && is_object($file) && _focal_point_supported_file($file)) {
+  if (_focal_point_supported_field_type('image') && is_object($file) && _focal_point_supported_file($file)) {
     $default_value = !empty($file->focal_point) ? $file->focal_point : _focal_point_guess_default($file->fid);
     $focal_point_id = backdrop_html_id('focal-point-media');
     $form['focal_point'] = array(
@@ -193,18 +171,18 @@ function _focal_point_form_append_focal_point_preview(&$form, $file) {
         '#type' => 'markup',
         '#theme' => 'image_style',
         '#style_name' => 'focal_point_preview',
-        '#path' => $file->uri,
+        '#uri' => $file->uri,
         '#alt' => isset($file->alt) ? $file->alt : '',
         '#title' => isset($file->title) ? $file->title : '',
       ),
+      '#attributes' => array('class' => array('focal-point-form-wrapper')),
       'preview_link' => _focal_point_preview_link($file->fid, $focal_point_id, $file->focal_point),
       'focal_point' => _focal_point_field($focal_point_id, $default_value),
       'focal_point_help' => _focal_point_help(),
     );
 
     // To prevent duplicate image previews from displaying we should go ahead
-    // and limit access to the preview element. Media does this already in some
-    // instances, but not all.
+    // and limit access to the preview element.
     $form['preview']['#access'] = FALSE;
     $form['#validate'][] = 'focal_point_form_validate';
   }
@@ -514,7 +492,7 @@ function focal_point_delete($fid) {
  *   Ex. 45,23.
  */
 function _focal_point_guess_default($fid) {
-  $method = config_get('focal_point.settings', 'focal_point_default_method');
+  $method = config_get('focal_point.settings', 'default_method');
   if ($method && ($file = file_load($fid)) && ($image = image_load($file->uri))) {
     $methods = focal_point_get_default_method_info();
     if (isset($methods[$method])) {
@@ -573,8 +551,8 @@ function _focal_point_field($indicator_id = 'focal-point', $default_value = FOCA
  */
 function _focal_point_help() {
   return array(
-    '#prefix' => '<div class="focal-point-help">',
-    '#markup' => t('Click and drag the crosshair to target the most important portion of the image.  This portion of the image will never be cropped.'),
+    '#prefix' => '<div class="description">',
+    '#markup' => t('Focal Point: click and drag the crosshair to target the most important portion of the image.  This portion of the image will never be cropped.'),
     '#suffix' => '</div>',
   );
 }
@@ -633,7 +611,7 @@ function _focal_point_supported_widget_type($type) {
  *   TRUE if the given field type is supported by focal point.
  */
 function _focal_point_supported_field_type($type) {
-  $enabled_for = config_get('focal_point.settings', 'focal_point_enabled_for');
+  $enabled_for = config_get('focal_point.settings', 'enabled_for');
   return in_array($type, $enabled_for, TRUE);
 }
 
@@ -689,11 +667,8 @@ function _focal_point_indicator($indicator_id = 'focal-point') {
     '#markup' => '',
     '#attached' => array(
       'library' => array(
-        array(
-          'system',
-          'ui.draggable',
-        ),
-      )
+        array('system', 'ui.draggable'),
+      ),
     ),
   );
 
@@ -732,7 +707,7 @@ function _focal_point_get_image_styles() {
 }
 
 /**
- * Allows previewing of derivitive images based on the given focal point.
+ * Allows previewing of derivative images based on the given focal point.
  *
  * Return a render array that shows the derivative images of the given fid
  * using the given focal point for every style that uses a focal point effect.
@@ -750,6 +725,7 @@ function _focal_point_get_image_styles() {
  */
 function _focal_point_preview($fid, $focal_point, $show_original = TRUE) {
   $file = is_numeric($fid) ? file_load($fid) : NULL;
+  $focal_point = empty($focal_point) ? FOCAL_POINT_DEFAULT : $focal_point;
   $output = array();
 
   // Using the example image, show every image style that uses a focal point
@@ -757,19 +733,23 @@ function _focal_point_preview($fid, $focal_point, $show_original = TRUE) {
   $output['focal_point_examples'] = array(
     '#theme_wrappers' => array('container'),
     '#attributes' => array(
-      'class' => array('focal_point_examples'),
+      'class' => array('focal-point-examples'),
     ),
   );
   if ($file) {
     if ($show_original) {
       $output['focal_point_examples']['original'] = array(
         '#type' => 'markup',
-        '#prefix' => '<h2>' . t('Original Image') . '</h2>',
-        '#theme' => 'image',
-        '#path' => $file->uri,
+        '#theme' => 'image_style',
+        '#style_name' => 'focal_point_preview',
+        '#style_label' => t('Original'),
+        '#uri' => $file->uri,
         '#theme_wrappers' => array('container'),
         '#attributes' => array(
-          'class' => array('focal-point-preview--original'),
+          'class' => array(
+            'focal-point-preview',
+            'focal-point-preview--original',
+          ),
         ),
       );
     }
@@ -780,20 +760,20 @@ function _focal_point_preview($fid, $focal_point, $show_original = TRUE) {
           // Don't output borealis styles; there are just too many.
           continue;
         }
-        // The 'label' property was not introduced until Drupal 7.23 so just in
-        // case we provide a fallback.
-        // @see https://www.drupal.org/node/2350147
-        $label = isset($style['label']) ? $style['label'] : $style['name'];
+        // @todo flush images if original is shown (e.g. on an edit/preview page)
         $output['focal_point_examples'][$isid] = array(
           '#type' => 'markup',
-          '#prefix' => '<h2>' . $label . '</h2>',
           '#theme' => 'focal_point_image_style',
           '#style_name' => $style['name'],
+          '#style_label' => $style['label'],
           '#path' => $file->uri,
           '#focal_point' => $focal_point,
           '#theme_wrappers' => array('container'),
           '#attributes' => array(
-            'class' => array('focal-point-preview--' . $style['name']),
+            'class' => array(
+              'focal-point-preview',
+              'focal-point-preview--' . $style['name'],
+            ),
           ),
         );
       }
@@ -802,7 +782,9 @@ function _focal_point_preview($fid, $focal_point, $show_original = TRUE) {
       $output['focal_point_examples']['#markup'] = '<div class="messages warning">' . t('There are no styles defined that use a focal point effect. To see how this module will work you should <a href="@url">create a new image style</a> that uses one.', array('@url' => url('/admin/config/media/image-styles'))) . '</div>';
     }
   }
-
+  $output['#attached']['css'] = array(
+    backdrop_get_path('module', 'focal_point') . '/css/focal_point.css',
+  );
   return $output;
 }
 
@@ -827,21 +809,19 @@ function _focal_point_preview_link($fid, $indicator_id = 'focal-point', $focal_p
   }
 
   $focal_point = empty($focal_point) ? FOCAL_POINT_DEFAULT : $focal_point;
-  $link_text = t('Image Preview');
+  $link_text = t('Preview');
   $link_path = 'focal_point/preview/' . $fid . '/' . $focal_point;
-
-  return array(
-    '#type' => 'markup',
-    '#markup' => l($link_text, $link_path, array(
-      'attributes' => array(
-        'target' => '_blank',
-        'class' => array(
-          'focal-point-preview-link',
-          'overlay-exclude',
-        ),
-        'data-focal-point-id' => $indicator_id,
+  $link_array = l($link_text, $link_path, array(
+    'attributes' => array(
+      'target' => '_blank',
+      'class' => array(
+        'focal-point-preview-link',
       ),
-    )),
+      'data-focal-point-id' => $indicator_id,
+    ),
+  ));
+  return array(
+    '#markup' => '<div>' . $link_array . '</div>',
   );
 }
 

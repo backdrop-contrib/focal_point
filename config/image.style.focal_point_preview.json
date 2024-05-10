@@ -1,0 +1,17 @@
+{
+    "_config_name": "image.style.focal_point_preview",
+    "label": "Focal point preview",
+    "name": "focal_point_preview",
+    "module": "focal_point",
+    "effects": [
+        {
+            "name": "image_scale",
+            "data": {
+                "width": "300",
+                "height": "",
+                "upscale": 1
+            },
+            "weight": "1"
+        }
+    ]
+}

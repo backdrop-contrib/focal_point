@@ -4,6 +4,7 @@
   cursor: move;
   position: absolute !important;
 }
+
 .focal-point-indicator:after {
   /*content: '⌖';*/
   content: '+';
@@ -19,11 +20,48 @@
   top: -.375em;
   left: -.375em;
 }
+
 .focal-point-wrapper {
   display: inline-block;
   position: relative;
   direction: ltr;
 }
+
 .focal-point-preview-link {
   display: block;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    mask-image: var(--icon-magnifying-glass);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    margin-right: .25rem;
+  }
+}
+
+.focal-point-examples {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1.5rem;
+
+  > .focal-point-preview {
+    max-width: 300px;
+  }
+
+  > .focal-point-preview--original {
+    max-width: 100%;
+    min-width: 100%;
+
+    img {
+      max-width: 300px;
+    }
+  }
+}
+
+.image-widget:has(.focal-point-wrapper) {
+  display: flex;
 }

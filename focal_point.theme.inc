@@ -21,6 +21,7 @@
  * @see theme_image_style()
  */
 function theme_focal_point_image_style($variables) {
+  $output = '';
   // Determine the dimensions of the styled image.
   $dimensions = array(
     'width' => $variables['width'],
@@ -37,8 +38,10 @@ function theme_focal_point_image_style($variables) {
   $delimiter = strpos($url, '?') !== FALSE ? '&' : '?';
 
   $variables['path'] = $url . $delimiter . 'focal_point=' . $variables['focal_point'];
+  $output .= !empty($variables['style_label']) ? '<h2>' . check_plain($variables['style_label']) . '</h2>' : '';
+  $output .= theme('image', $variables);
 
-  return theme('image', $variables);
+  return $output;
 }
 
 /**

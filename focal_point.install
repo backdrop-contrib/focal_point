@@ -29,7 +29,7 @@ function focal_point_uninstall() {
   $fid = config_get('focal_point.settings', 'focal_point_test_drive_image');
   if ($file = file_load($fid)) {
     file_usage_delete($file, 'focal_point');
-    file_delete($file);
+    file_delete($fid);
   }
 }
 
@@ -156,7 +156,6 @@ function focal_point_update_last_removed() {
 /**
  * Move focal_point settings from variables to config.
  */
-
 function focal_point_update_1000() {
 
   // Migrate variables to config.
@@ -193,6 +192,42 @@ function focal_point_update_1001() {
     }
   }
 }
+
+/**
+ * Ensure image style is available. Clean up config property names.
+ */
+function focal_point_update_1002() {
+  // Check focal_point_preview image style.
+  $config = config('image.style.focal_point_preview');
+  if (empty($config->get('name'))) {
+    $data = array(
+      "label" => "Focal point preview",
+      "name" => "focal_point_preview",
+      "storage" => 4,
+      "module" => "focal_point",
+      "effects" => array(
+        array(
+          "name" => "image_scale",
+          "data" => array(
+            "width" => "300",
+            "height" => "",
+            "upscale" => 1,
+          ),
+          "weight" => 1,
+        ),
+      ),
+    );
+    $config->setData($data);
+    $config->save();
+  }
+  $config = config('focal_point.settings');
+  $config->set('test_drive_image', $config->get('focal_point_test_drive_image'));
+  $config->set('test_drive_focal_point', $config->get('focal_point_test_drive_focal_point'));
+  $config->set('default_method', $config->get('focal_point_default_method'));
+  $config->set('enabled_for', $config->get('focal_point_enabled_for'));
+  $config->save();
+}
+
 
 /*
  * @} End of "defgroup updates-7.x-to-1.x"

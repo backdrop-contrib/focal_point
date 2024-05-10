@@ -17,12 +17,12 @@ function focal_point_configuration_form($form, &$form_state) {
     $default_options[$key] = check_plain($info['label']);
   }
   $form['#config'] = 'focal_point.settings';
-  $form['focal_point_default_method'] = array(
+  $form['default_method'] = array(
     '#type' => 'select',
     '#title' => t('Calculate intial focal point using'),
     '#descrition' => t('This can slow down your site, especially if you are bulk uploading images.'),
     '#options' => array('' => t('Disabled')) + $default_options,
-    '#default_value' => $config->get('focal_point_default_method'),
+    '#default_value' => $config->get('default_method'),
     '#access' => !empty($default_options),
   );
 
@@ -30,13 +30,13 @@ function focal_point_configuration_form($form, &$form_state) {
     'image' => t('Standard image fields'),
   );
   // @todo consider allowing $options to be altered.
-  $form['focal_point_enabled_for'] = array(
+  $form['enabled_for'] = array(
     '#type' => 'checkboxes',
     '#title' => 'Enable focal point for the following:',
     '#options' => $options,
-    '#default_value' => $config->get('focal_point_enabled_for'),
+    '#default_value' => $config->get('enabled_for'),
   );
-  $form['focal_point_test_drive_link'] = array(
+  $form['test_drive_link'] = array(
     '#type' => 'markup',
     '#markup' => l(t('Take a test drive'), 'focal_point/test-drive'),
   );
@@ -49,9 +49,9 @@ function focal_point_configuration_form($form, &$form_state) {
  */
 function focal_point_test_drive_form($form, &$form_state) {
   $config = config('focal_point.settings');
-  $fid = $config->get('focal_point_test_drive_image');
+  $fid = $config->get('test_drive_image');
   $file = !is_null($fid) ? file_load($fid) : NULL;
-  $focal_point = $config->get('focal_point_test_drive_focal_point');
+  $focal_point = $config->get('test_drive_focal_point');
 
   if (!empty($fid) && $file) {
     // Display the image and include the focal point indicator and field.
@@ -59,21 +59,19 @@ function focal_point_test_drive_form($form, &$form_state) {
       '#theme_wrappers' => array('container'),
       'test_drive_indicator' => _focal_point_indicator('test-drive'),
       'test_drive_widget_image' => array(
-        '#type' => 'markup',
         '#theme' => 'image_style',
         '#style_name' => 'focal_point_preview',
-        '#path' => $file->uri,
+        '#uri' => $file->uri,
       ),
-      'focal_point_test_drive_focal_point' => _focal_point_field('test-drive', $focal_point),
+      'test_drive_focal_point' => _focal_point_field('test-drive', $focal_point),
+      'test_drive_submit' => array(
+        '#type' => 'submit',
+        '#value' => t('Set the focal point'),
+      ),
     );
   }
 
-  $form['test_drive_submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Set the focal point'),
-  );
-
-  $form['examples'] = _focal_point_preview($fid, $focal_point);
+  $form['examples'] = _focal_point_preview($fid, $focal_point, FALSE);
   $form['#submit'][] = 'focal_point_test_drive_form_submit';
 
   return $form;
@@ -88,14 +86,15 @@ function focal_point_test_drive_form_submit(&$form, &$form_state) {
   $config = config('focal_point.settings');
 
   // Save the test drive focal point setting.
-  if (isset($form_state['values']['focal_point_test_drive_focal_point'])) {
-    $old_value = $config->get('focal_point_test_drive_focal_point');
-    if ($old_value !== $form_state['values']['focal_point_test_drive_focal_point']) {
-      $config->set('focal_point_test_drive_focal_point', $form_state['values']['focal_point_test_drive_focal_point']);
+  $focal_point = (!empty($form_state['values']['test_drive_focal_point'])) ? $form_state['values']['test_drive_focal_point'] : FOCAL_POINT_DEFAULT;
+  if (focal_point_validate($focal_point)) {
+    $old_value = $config->get('test_drive_focal_point');
+    if ($old_value !== $focal_point) {
+      $config->set('test_drive_focal_point', $focal_point);
       $config->save();
 
       // Delete old derivative images since the focal point changed.
-      $fid = $config->get('focal_point_test_drive_image');
+      $fid = $config->get('test_drive_image');
       $file = !is_null($fid) ? file_load($fid) : NULL;
       if ($file) {
         image_path_flush($file->uri);
@@ -120,7 +119,7 @@ function focal_point_test_drive_form_submit(&$form, &$form_state) {
  *
  * @see hook_focal_point_crop_data_alter()
  */
-function focal_point_preview_page($fid, $focal_point = '') {
+function focal_point_preview_page($fid, $focal_point) {
   $file = is_numeric($fid) ? file_load($fid) : NULL;
 
   if ($file && focal_point_validate($focal_point)) {
@@ -136,4 +135,12 @@ function focal_point_preview_page($fid, $focal_point = '') {
   }
 
   return $output;
+}
+
+/**
+ * Title callback for the preview page.
+ */
+function focal_point_preview_page_title($focal_point) {
+  $focal_point = check_plain($focal_point);
+  return t('Image Preview (@focalpoint)', array('@focalpoint' => $focal_point));
 }
