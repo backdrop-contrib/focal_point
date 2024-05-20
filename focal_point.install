@@ -135,7 +135,7 @@ function focal_point_create_test_image($scheme) {
   $file = entity_create('file', (array) $file);
   file_save($file);
   if ($file) {
-    $config->set('focal_point_test_drive_image', $file->fid);
+    $config->set('test_drive_image', $file->fid);
     $config->save();
   }
 }
