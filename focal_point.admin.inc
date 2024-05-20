@@ -122,7 +122,7 @@ function focal_point_test_drive_form_submit(&$form, &$form_state) {
 function focal_point_preview_page($fid, $focal_point) {
   $file = is_numeric($fid) ? file_load($fid) : NULL;
 
-  if ($file && focal_point_validate($focal_point)) {
+  if ($file) {
     // Get the render array for the preview.
     $output = _focal_point_preview($fid, $focal_point);
 

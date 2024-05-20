@@ -37,11 +37,11 @@
         // The setTimeout was added to ensure the focal point is set properly on
         // modal windows. See http://goo.gl/s73ge.
         setTimeout(function() {
-          $img.one('load', function(){
+          $img.one('load', function( event ){
             focalPointSetIndicator($indicator, $(this), $field);
           }).each(function() {
             if (this.complete) {
-              $(this).load();
+              $(this).trigger("load");
             }
           });
         }, 0);
@@ -123,7 +123,7 @@
   }
 
   /**
-   * Change the position of the focal point indicator. This may not work in IE7.
+   * Change the position of the focal point indicator.
    *
    * @param object $indicator
    *   The indicator jQuery object whose position should be set.

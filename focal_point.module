@@ -32,7 +32,7 @@ function focal_point_menu() {
     'access arguments' => array('preview focal point'),
     'file' => 'focal_point.admin.inc',
   );
-  $items['focal_point/preview/%/%'] = array(
+  $items['focal_point/preview/%/%focal_point'] = array(
     'type' => MENU_CALLBACK,
     'title callback' => 'focal_point_preview_page_title',
     'title arguments' => array(3),
@@ -43,6 +43,13 @@ function focal_point_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_load().
+ */
+function focal_point_load($focal_point) {
+  return (focal_point_validate($focal_point)) ? $focal_point : FOCAL_POINT_DEFAULT;
 }
 
 /**
@@ -537,7 +544,10 @@ function _focal_point_field($indicator_id = 'focal-point', $default_value = FOCA
       'data-focal-point-id' => $indicator_id,
     ),
     '#attached' => array(
-      'js' => array(backdrop_get_path('module', 'focal_point') . '/js/focal_point.js'),
+      'js' => array(backdrop_get_path('module', 'focal_point') . '/js/focal_point.js' => array(
+        'type' => 'file',
+        'weight' => 25,
+      )),
       'css' => array(backdrop_get_path('module', 'focal_point') . '/css/focal_point.css'),
     ),
   );
@@ -816,7 +826,12 @@ function _focal_point_preview_link($fid, $indicator_id = 'focal-point', $focal_p
       'target' => '_blank',
       'class' => array(
         'focal-point-preview-link',
+        'use-ajax',
       ),
+      'data-dialog' => TRUE,
+      'data-dialog-options' => backdrop_json_encode(array(
+        'width' => 800,
+      )),
       'data-focal-point-id' => $indicator_id,
     ),
   ));
