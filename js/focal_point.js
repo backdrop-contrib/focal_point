@@ -16,6 +16,7 @@
       $(".focal-point-indicator", context).once(function() {
         // Set some variables for the different pieces at play.
         var $indicator = $(this);
+        var $id = $indicator.attr('id');
         var $img = $(this).siblings('img');
         var focalPointID = Backdrop.checkPlain($(this).attr('id'));
         var $field = $('.focal-point[data-focal-point-id="' + focalPointID + '"]', context);
@@ -84,10 +85,14 @@
 
           // Re-jigger the href of the preview link.
           if ($previewLink.length > 0) {
+            var previewId = $id + '-preview-link';
             var href = $previewLink.attr('href').split('/');
             href.pop();
             href.push(encodeURIComponent($(this).val()));
-            $previewLink.attr('href', href.join('/'));
+            href = href.join('/');
+            $previewLink.attr('href', href);
+            Backdrop.ajax[previewId].url = href;
+            Backdrop.ajax[previewId].options.url = href;
           }
         });
 
@@ -129,7 +134,7 @@
    *   The indicator jQuery object whose position should be set.
    * @param object $img
    *   The image jQuery object to which the indicator is attached.
-   * @param array $field
+   * @param object $field
    *   The field jQuery object where the position can be found.
    */
   function focalPointSetIndicator($indicator, $img, $field) {

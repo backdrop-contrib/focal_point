@@ -833,6 +833,7 @@ function _focal_point_preview_link($fid, $indicator_id = 'focal-point', $focal_p
         'width' => 800,
       )),
       'data-focal-point-id' => $indicator_id,
+      'id' => backdrop_html_id($indicator_id . '-preview-link'),
     ),
   ));
   return array(
