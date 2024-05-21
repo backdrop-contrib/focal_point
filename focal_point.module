@@ -110,18 +110,19 @@ function focal_point_config_info() {
  */
 function focal_point_library_info() {
   $module_info = system_get_info('module', 'focal_point');
+  $path = backdrop_get_path('module', 'focal_point');
   $libraries = array(
     'focal_point' => array(
       'title' => 'Focal Point',
       'version' => $module_info['version'],
       'js' => array(
-        backdrop_get_path('module', 'focal_point') . '/js/focal_point.js' => array(
+        $path . '/js/focal_point.js' => array(
           'type' => 'file',
           'weight' => 25,
         ),
       ),
       'css' => array(
-        backdrop_get_path('module', 'focal_point') . '/css/focal_point.css' => array(),
+        $path . '/css/focal_point.css' => array(),
       ),
       'icons' => array(
         'magnifying-glass',
