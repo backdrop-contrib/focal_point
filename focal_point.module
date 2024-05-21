@@ -106,6 +106,32 @@ function focal_point_config_info() {
 }
 
 /**
+ * Implements hook_library_info().
+ */
+function focal_point_library_info() {
+  $module_info = system_get_info('module', 'focal_point');
+  $libraries = array(
+    'focal_point' => array(
+      'title' => 'Focal Point',
+      'version' => $module_info['version'],
+      'js' => array(
+        backdrop_get_path('module', 'focal_point') . '/js/focal_point.js' => array(
+          'type' => 'file',
+          'weight' => 25,
+        ),
+      ),
+      'css' => array(
+        backdrop_get_path('module', 'focal_point') . '/css/focal_point.css' => array(),
+      ),
+      'icons' => array(
+        'magnifying-glass',
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+/**
  * Implements hook_admin_paths().
  */
 function focal_point_admin_paths() {
@@ -544,11 +570,9 @@ function _focal_point_field($indicator_id = 'focal-point', $default_value = FOCA
       'data-focal-point-id' => $indicator_id,
     ),
     '#attached' => array(
-      'js' => array(backdrop_get_path('module', 'focal_point') . '/js/focal_point.js' => array(
-        'type' => 'file',
-        'weight' => 25,
-      )),
-      'css' => array(backdrop_get_path('module', 'focal_point') . '/css/focal_point.css'),
+      'library' => array(
+        array('focal_point', 'focal_point'),
+      ),
     ),
   );
 }
