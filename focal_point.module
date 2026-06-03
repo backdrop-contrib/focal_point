@@ -243,13 +243,11 @@ function focal_point_field_widget_form_alter(&$element, &$form_state, $context) 
 function focal_point_widget_process($element, &$form_state, $form) {
   // If a file has already been uploaded, include the necessary components of
   // for the focal point widget.
-  $access = (bool) !empty($element['#file']);
-  if ($access) {
-    $default_value = !empty($element['#default_value']['focal_point']) ? $element['#default_value']['focal_point'] : _focal_point_guess_default($element['#file']->fid);
+  $default_value = $element['#default_value']['focal_point'] ?? '';
+  if (empty($default_value) && (!empty($element['#files']) || !empty($element['#file']))) {
+    $default_value = $element['#value']['fid'] ? _focal_point_guess_default($element['#value']['fid']) : '';
   }
-  else {
-    $default_value = !empty($element['#default_value']['focal_point']) ? $element['#default_value']['focal_point'] : '';
-  }
+  $access = !empty($default_value);
   $element['focal_point'] = _focal_point_field($element['#focal_point_id'], $default_value, $access);
 
   return $element;
@@ -263,12 +261,13 @@ function focal_point_preprocess_image_widget(&$variables) {
 
   // Add the "indicator" to the default image widget.
   if (isset($element['preview']) && isset($element['#focal_point_id'])) {
+    $fid = (!empty($element['#files']) || !empty($element['#file'])) ? $element['#value']['fid'] : 0;
     unset($element['preview']['#weight']);
     $preview = array(
       'indicator' => _focal_point_indicator($element['#focal_point_id']),
       'thumbnail' => $element['preview'],
       'preview_link' => _focal_point_preview_link(
-        $element['#file']->fid,
+        $fid,
         $element['#focal_point_id'],
         isset($element['focal_point']['#default_value']) ? $element['focal_point']['#default_value'] : FOCAL_POINT_DEFAULT),
     );
