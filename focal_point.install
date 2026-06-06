@@ -24,12 +24,10 @@ function focal_point_install() {
  * Implements hook_uninstall().
  */
 function focal_point_uninstall() {
-
   // Delete the test drive image.
-  $fid = config_get('focal_point.settings', 'focal_point_test_drive_image');
+  $fid = config_get('focal_point.settings', 'test_drive_image');
   if ($file = file_load($fid)) {
-    file_usage_delete($file, 'focal_point');
-    file_delete($fid);
+    file_usage_delete($file, 'focal_point', 'file', $file->fid);
   }
 }
 
@@ -147,6 +145,7 @@ function focal_point_create_test_image($scheme) {
     }
   }
   if ($file) {
+    file_usage_add($file, 'focal_point', 'file', $file->fid);
     $config->set('test_drive_image', $file->fid);
     $config->save();
   }
