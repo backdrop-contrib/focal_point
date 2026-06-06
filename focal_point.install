@@ -24,12 +24,10 @@ function focal_point_install() {
  * Implements hook_uninstall().
  */
 function focal_point_uninstall() {
-
   // Delete the test drive image.
-  $fid = config_get('focal_point.settings', 'focal_point_test_drive_image');
+  $fid = config_get('focal_point.settings', 'test_drive_image');
   if ($file = file_load($fid)) {
-    file_usage_delete($file, 'focal_point');
-    file_delete($fid);
+    file_usage_delete($file, 'focal_point', 'file', $file->fid);
   }
 }
 
@@ -109,6 +107,7 @@ function focal_point_migrate_imagefield_focus_data($overwrite = FALSE) {
  *   The file scheme for saving a test image.
  */
 function focal_point_create_test_image($scheme) {
+  $file = NULL;
   $config = config('focal_point.settings');
   $config->clear('focal_point_test_drive_focal_point');
   $config->save();
@@ -123,18 +122,30 @@ function focal_point_create_test_image($scheme) {
 
   $full_dir = $test_drive_image['scheme'] . $test_drive_image['dest_directory'];
   $file_uri = $full_dir . '/' . $test_drive_image['file_name'];
-  file_prepare_directory($full_dir, FILE_CREATE_DIRECTORY);
-  file_unmanaged_copy($test_drive_image['source_path'], $file_uri, FILE_EXISTS_REPLACE);
-  $file = array(
-    'uid' => 1,
-    'status' => FILE_STATUS_PERMANENT,
-    'filename' => $test_drive_image['file_name'],
-    'uri' => $file_uri,
-    'filemime' => file_get_mimetype($test_drive_image['source_path']),
-  );
-  $file = entity_create('file', (array) $file);
-  file_save($file);
+  if (!file_exists($file_uri)) {
+    file_prepare_directory($full_dir, FILE_CREATE_DIRECTORY);
+    file_unmanaged_copy($test_drive_image['source_path'], $file_uri, FILE_EXISTS_REPLACE);
+    $file = array(
+      'uid' => 1,
+      'status' => FILE_STATUS_PERMANENT,
+      'filename' => $test_drive_image['file_name'],
+      'uri' => $file_uri,
+      'filemime' => file_get_mimetype($test_drive_image['source_path']),
+    );
+    $file = entity_create('file', (array) $file);
+    file_save($file);
+  }
+  else {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'file')
+      ->propertyCondition('uri', $file_uri);
+    $result = $query->execute();
+    if (!empty($result['file'])) {
+      $file = entity_load('file', key($result['file']));
+    }
+  }
   if ($file) {
+    file_usage_add($file, 'focal_point', 'file', $file->fid);
     $config->set('test_drive_image', $file->fid);
     $config->save();
   }
