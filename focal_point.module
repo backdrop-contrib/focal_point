@@ -40,6 +40,7 @@ function focal_point_menu() {
     'page arguments' => array(2, 3),
     'access arguments' => array('preview focal point'),
     'file' => 'focal_point.admin.inc',
+    'theme callback' => 'ajax_base_page_theme',
   );
 
   return $items;
